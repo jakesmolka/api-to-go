@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+    git:
+        build: .
+        volumes:
+            - shared:/src
+            - ${PWD}/clone-or-pull.sh:/helper
+        # clones or pulls if already cloned before
+        command: /helper git://github.com/openEHR/specifications-ITS.git /src
+
+    spec-conv:
+        build: ./apib2swagger
+        volumes:
+            - shared:/docs
+        depends_on:
+            - git
+        command: apib2swagger -i /docs/REST_API/ehr.apib -o /docs/ehr.json
+    
+    goswagger:
+        image: quay.io/goswagger/swagger
+        volumes:
+            - shared:/src
+            # distinct output folder connected to host's pwd
+            - ./out:/output
+        depends_on:
+            - spec-conv
+        command: generate server -f /src/ehr.json -t /output
+        environment:
+            - DEBUG=true
+
+# shared volume
+volumes:
+    shared:
