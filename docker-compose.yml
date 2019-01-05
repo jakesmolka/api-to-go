@@ -7,25 +7,25 @@ services:
             - shared:/src
             - ${PWD}/clone-or-pull.sh:/helper
         # clones or pulls if already cloned before
-        command: /helper git://github.com/openEHR/specifications-ITS.git /src
+        command: /helper git://github.com/openEHR/specifications-ITS-REST.git /src
 
     spec-conv:
         build: ./apib2swagger
         volumes:
-            - shared:/docs
+            - shared:/spec
         depends_on:
             - git
-        command: apib2swagger -i /docs/REST_API/ehr.apib -o /docs/ehr.json
+        command: apib2swagger -i /spec/src/ehr.apib -o /spec/src/ehr.json
     
     goswagger:
         image: quay.io/goswagger/swagger
         volumes:
-            - shared:/src
+            - shared:/spec
             # distinct output folder connected to host's pwd
             - ./out:/output
         depends_on:
             - spec-conv
-        command: generate server -f /src/ehr.json -t /output
+        command: generate server -f /spec/src/ehr.json -t /output
         environment:
             - DEBUG=true
 
